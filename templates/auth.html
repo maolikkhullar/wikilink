@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication System</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        .primary-button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-bottom: 15px;
+        }
+        
+        .primary-button:hover {
+            background-color: #45a049;
+        }
+        
+        .secondary-button {
+            width: 100%;
+            padding: 12px;
+            background-color: #f8f9fa;
+            color: #555;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .secondary-button:hover {
+            background-color: #e9ecef;
+        }
+        
+        .response {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+
+        .token-display {
+            word-break: break-all;
+            margin-top: 8px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .page {
+            display: none;
+        }
+        
+        .active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="registerPage" class="page active">
+            <div class="card">
+                <h1>Register</h1>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="registerUsername">Username</label>
+                        <input type="text" id="registerUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">Password</label>
+                        <input type="password" id="registerPassword" required>
+                    </div>
+                    <button type="submit" class="primary-button">Register</button>
+                </form>
+                <button onclick="showLoginPage()" class="secondary-button">Already have an account? Login</button>
+                <div id="registerResponse" class="response"></div>
+            </div>
+        </div>
+        
+        <div id="loginPage" class="page">
+            <div class="card">
+                <h1>Login</h1>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginUsername">Username</label>
+                        <input type="text" id="loginUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" required>
+                    </div>
+                    <button type="submit" class="primary-button">Login</button>
+                </form>
+                <button onclick="showRegisterPage()" class="secondary-button">Don't have an account? Register</button>
+                <div id="loginResponse" class="response"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showLoginPage() {
+            document.getElementById('registerPage').classList.remove('active');
+            document.getElementById('loginPage').classList.add('active');
+            document.getElementById('registerResponse').style.display = 'none';
+        }
+        
+        function showRegisterPage() {
+            document.getElementById('loginPage').classList.remove('active');
+            document.getElementById('registerPage').classList.add('active');
+            document.getElementById('loginResponse').style.display = 'none';
+        }
+    
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+            
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('password', password);
+            
+            fetch('/api/auth/register', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const responseElement = document.getElementById('registerResponse');
+                responseElement.style.display = 'block';
+                
+                if (data.message && data.message.includes('created successfully')) {
+                    responseElement.className = 'response success';
+                    responseElement.textContent = data.message;
+                    document.getElementById('registerForm').reset();
+                    
+                    // Automatically redirect to login after successful registration
+                    setTimeout(() => {
+                        showLoginPage();
+                    }, 2000);
+                } else {
+                    responseElement.className = 'response error';
+                    responseElement.textContent = data.message || 'An error occurred';
+                }
+            })
+            .catch(error => {
+                const responseElement = document.getElementById('registerResponse');
+                responseElement.style.display = 'block';
+                responseElement.className = 'response error';
+                responseElement.textContent = 'An error occurred while connecting to the server';
+                console.error('Error:', error);
+            });
+        });
+        
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('password', password);
+            
+            fetch('/api/auth/login', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const responseElement = document.getElementById('loginResponse');
+                responseElement.style.display = 'block';
+                
+                if (data.access_token) {
+                    responseElement.className = 'response success';
+                    responseElement.innerHTML = 'Login successful! Your access token: ' +
+                        '<div class="token-display">' + data.access_token + '</div>';
+                    
+                    document.getElementById('loginForm').reset();
+                    
+                    // Store token in localStorage for future API requests
+                    localStorage.setItem('auth_token', data.access_token);
+                    window.location.href = '/wikipedia';
+                } else {
+                    responseElement.className = 'response error';
+                    responseElement.textContent = data.message || 'An error occurred';
+                }
+            })
+            .catch(error => {
+                const responseElement = document.getElementById('loginResponse');
+                responseElement.style.display = 'block';
+                responseElement.className = 'response error';
+                responseElement.textContent = 'An error occurred while connecting to the server';
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
